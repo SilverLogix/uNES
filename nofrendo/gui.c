@@ -23,22 +23,22 @@
 ** $Id: gui.c,v 1.2 2001/04/27 14:37:11 neil Exp $
 */
 
-#include "stdio.h"
-#include "string.h"
-#include "stdarg.h"
-#include "noftypes.h"
-#include "nes_ppu.h"
-#include "nes_apu.h"
-#include "nesinput.h"
-#include "nes.h"
-#include "log.h"
-#include "osd.h"
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
+#include <noftypes.h>
+#include <nes_ppu.h>
+#include <nes_apu.h>
+#include <nesinput.h>
+#include <nes.h>
+#include <log.h>
+#include <osd.h>
 
-#include "bitmap.h"
+#include <bitmap.h>
 
-#include "gui.h"
-#include "gui_elem.h"
-#include "vid_drv.h"
+#include <gui.h>
+#include <gui_elem.h>
+#include <vid_drv.h>
 
 /* TODO: oh god */
 /* 8-bit GUI color table */
@@ -61,25 +61,23 @@ rgb_t gui_pal[GUI_TOTALCOLORS] =
 };
 
 /**************************************************************/
-
-//#include <pcx.h>
-#include "nesstate.h"
+#include <pcx.h>
+#include <nesstate.h>
 static bool option_drawsprites = true;
 
+/* save a PCX snapshot */
 void gui_savesnap(void)
 {
-    /*
    char filename[PATH_MAX];
    nes_t *nes = nes_getcontextptr();
 
    if (osd_makesnapname(filename, PATH_MAX) < 0)
       return;
 
-   if (pcx_write(filename, vid_getbuffer(), nes->ppu->curpal)) 
+   if (pcx_write(filename, nes->vidbuf, nes->ppu->curpal)) 
       return;
 
    gui_sendmsg(GUI_GREEN, "Screen saved to %s", filename);
-     */
 }
 
 /* Show/hide sprites (hiding sprites useful for making maps) */

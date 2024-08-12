@@ -17,49 +17,37 @@
 ** must bear this legend.
 **
 **
-** version.h
+** intro.h
 **
-** Program name / version definitions
-** $Id: version.h,v 1.2 2001/05/05 16:50:49 neil Exp $
+** Nofrendo intro -- 6502 code
+** $Id: intro.h,v 1.2 2001/04/27 14:37:11 neil Exp $
 */
 
-#ifndef _VERSION_H_
-#define _VERSION_H_
+#ifndef _INTRO_H_
+#define _INTRO_H_
 
-#ifdef NSF_PLAYER
-#define  APP_STRING     "Nosefart"
-#else
-#define  APP_STRING     "Nofrendo"
-#endif /* NSF_PLAYER */
+#include <nes_rom.h>
 
-#define  APP_VERSION    "2.0"
+extern void intro_get_header(rominfo_t *rominfo);
+extern int intro_get_rom(rominfo_t *rominfo);
 
-#endif /* _VERSION_H_ */
+#endif /* !_INTRO_H_ */
 
 /*
-** $Log: version.h,v $
-** Revision 1.2  2001/05/05 16:50:49  neil
-** preparing for distribution
+** $Log: intro.h,v $
+** Revision 1.2  2001/04/27 14:37:11  neil
+** wheeee
 **
 ** Revision 1.1.1.1  2001/04/27 07:03:54  neil
 ** initial
 **
-** Revision 1.9  2000/07/31 04:28:47  matt
-** one million cleanups
+** Revision 1.3  2000/10/25 00:23:16  matt
+** makefiles updated for new directory structure
 **
-** Revision 1.8  2000/07/17 01:52:28  matt
-** made sure last line of all source files is a newline
+** Revision 1.2  2000/10/10 13:03:54  matt
+** Mr. Clean makes a guest appearance
 **
-** Revision 1.7  2000/07/04 04:46:55  matt
-** updated version number
-**
-** Revision 1.6  2000/06/20 00:03:39  matt
-** updated for 1.91
-**
-** Revision 1.5  2000/06/09 17:01:56  matt
-** changed version to 1.90
-**
-** Revision 1.4  2000/06/09 15:12:25  matt
+** Revision 1.1  2000/07/30 04:29:11  matt
 ** initial revision
 **
 */

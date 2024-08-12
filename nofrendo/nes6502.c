@@ -1,16 +1,18 @@
+#pragma GCC optimize ("O3")
+
 /*
 ** Nofrendo (c) 1998-2000 Matthew Conte (matt@conte.com)
 **
 **
 ** This program is free software; you can redistribute it and/or
-** modify it under the terms of version 2 of the GNU Library General 
+** modify it under the terms of version 2 of the GNU Library General
 ** Public License as published by the Free Software Foundation.
 **
-** This program is distributed in the hope that it will be useful, 
+** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-** Library General Public License for more details.  To obtain a 
-** copy of the GNU Library General Public License, write to the Free 
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+** Library General Public License for more details.  To obtain a
+** copy of the GNU Library General Public License, write to the Free
 ** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **
 ** Any permitted reproduction of these routines, in whole or in part,
@@ -22,11 +24,15 @@
 ** NES custom 6502 (2A03) CPU implementation
 ** $Id: nes6502.c,v 1.2 2001/04/27 14:37:11 neil Exp $
 */
+
+
 #pragma GCC optimize ("O3")
 
-#include "noftypes.h"
+#include <noftypes.h>
 #include "nes6502.h"
-//#include "dis6502.h"
+#include "dis6502.h"
+
+#include <esp_attr.h>
 
 //#define  NES6502_DISASM
 
@@ -179,7 +185,7 @@
 { \
    ZP_IND_Y_ADDR(btemp); \
    value = ZP_READBYTE(btemp); \
-}  
+}
 
 /* Indexed indirect */
 #define INDIR_X_ADDR(address) \
@@ -193,7 +199,7 @@
 { \
    INDIR_X_ADDR(address); \
    value = mem_readbyte(address); \
-} 
+}
 
 #define INDIR_X_BYTE(value) \
 { \
@@ -211,7 +217,7 @@
 { \
    INDIR_Y_ADDR(address); \
    value = mem_readbyte(address); \
-} 
+}
 
 #define INDIR_Y_BYTE(value) \
 { \
@@ -566,7 +572,7 @@
    ADD_CYCLES(2); \
 }
 
-/* C is clear when data > A */ 
+/* C is clear when data > A */
 #define _COMPARE(reg, value) \
 { \
    temp = (reg) - (value); \
@@ -1131,7 +1137,7 @@
 
 
 /* internal CPU context */
-static nes6502_context cpu;
+nes6502_context cpu;
 static int remaining_cycles = 0; /* so we can release timeslice */
 /* memory region pointers */
 static uint8 *ram = NULL, *stack = NULL;
@@ -1200,7 +1206,7 @@ INLINE void bank_writebyte(register uint32 address, register uint8 value)
 }
 
 /* read a byte of 6502 memory */
-static uint8 mem_readbyte(uint32 address)
+static uint8 IRAM_ATTR mem_readbyte(uint32 address)
 {
    nes6502_memread *mr;
 
@@ -1230,7 +1236,7 @@ static uint8 mem_readbyte(uint32 address)
 }
 
 /* write a byte of data to 6502 memory */
-static void mem_writebyte(uint32 address, uint8 value)
+static void IRAM_ATTR mem_writebyte(uint32 address, uint8 value)
 {
    nes6502_memwrite *mw;
 
@@ -1301,7 +1307,7 @@ uint8 nes6502_getbyte(uint32 address)
 }
 
 /* get number of elapsed cycles */
-uint32 nes6502_getcycles(bool reset_flag)
+uint32 IRAM_ATTR nes6502_getcycles(bool reset_flag)
 {
    uint32 cycles = cpu.total_cycles;
 
@@ -1364,7 +1370,7 @@ uint32 nes6502_getcycles(bool reset_flag)
 ** Returns the number of cycles *actually* executed, which will be
 ** anywhere from zero to timeslice_cycles + 6
 */
-int nes6502_execute(int timeslice_cycles)
+int IRAM_ATTR nes6502_execute(int timeslice_cycles)
 {
    int old_cycles = cpu.total_cycles;
 
@@ -1381,7 +1387,7 @@ int nes6502_execute(int timeslice_cycles)
    uint8 A, X, Y, S;
 
 #ifdef NES6502_JUMPTABLE
-   
+
    static const void *opcode_table[256] =
    {
       &&op00, &&op01, &&op02, &&op03, &&op04, &&op05, &&op06, &&op07,
@@ -1428,7 +1434,7 @@ int nes6502_execute(int timeslice_cycles)
    if (cpu.burn_cycles && remaining_cycles > 0)
    {
       int burn_for;
-      
+
       burn_for = MIN(remaining_cycles, cpu.burn_cycles);
       ADD_CYCLES(burn_for);
       cpu.burn_cycles -= burn_for;
@@ -1495,7 +1501,7 @@ int nes6502_execute(int timeslice_cycles)
          OPCODE_END
 
       OPCODE_BEGIN(05)  /* ORA $nn */
-         ORA(3, ZERO_PAGE_BYTE); 
+         ORA(3, ZERO_PAGE_BYTE);
          OPCODE_END
 
       OPCODE_BEGIN(06)  /* ASL $nn */
@@ -1507,7 +1513,7 @@ int nes6502_execute(int timeslice_cycles)
          OPCODE_END
 
       OPCODE_BEGIN(08)  /* PHP */
-         PHP(); 
+         PHP();
          OPCODE_END
 
       OPCODE_BEGIN(09)  /* ORA #$nn */
@@ -1523,7 +1529,7 @@ int nes6502_execute(int timeslice_cycles)
          OPCODE_END
 
       OPCODE_BEGIN(0C)  /* NOP $nnnn */
-         TOP(); 
+         TOP();
          OPCODE_END
 
       OPCODE_BEGIN(0D)  /* ORA $nnnn */
@@ -1545,7 +1551,7 @@ int nes6502_execute(int timeslice_cycles)
       OPCODE_BEGIN(11)  /* ORA ($nn),Y */
          ORA(5, INDIR_Y_BYTE_READ);
          OPCODE_END
-      
+
       OPCODE_BEGIN(13)  /* SLO ($nn),Y */
          SLO(8, INDIR_Y, mem_writebyte, addr);
          OPCODE_END
@@ -1578,7 +1584,7 @@ int nes6502_execute(int timeslice_cycles)
       OPCODE_BEGIN(19)  /* ORA $nnnn,Y */
          ORA(4, ABS_IND_Y_BYTE_READ);
          OPCODE_END
-      
+
       OPCODE_BEGIN(1A)  /* NOP */
       OPCODE_BEGIN(3A)  /* NOP */
       OPCODE_BEGIN(5A)  /* NOP */
@@ -1612,7 +1618,7 @@ int nes6502_execute(int timeslice_cycles)
       OPCODE_BEGIN(1F)  /* SLO $nnnn,X */
          SLO(7, ABS_IND_X, mem_writebyte, addr);
          OPCODE_END
-      
+
       OPCODE_BEGIN(20)  /* JSR $nnnn */
          JSR();
          OPCODE_END
@@ -1984,7 +1990,7 @@ int nes6502_execute(int timeslice_cycles)
       OPCODE_BEGIN(8E)  /* STX $nnnn */
          STX(4, ABSOLUTE_ADDR, mem_writebyte, addr);
          OPCODE_END
-      
+
       OPCODE_BEGIN(8F)  /* SAX $nnnn */
          SAX(4, ABSOLUTE_ADDR, mem_writebyte, addr);
          OPCODE_END
@@ -2048,7 +2054,7 @@ int nes6502_execute(int timeslice_cycles)
       OPCODE_BEGIN(9F)  /* SHA $nnnn,Y */
          SHA(5, ABS_IND_Y_ADDR, mem_writebyte, addr);
          OPCODE_END
-      
+
       OPCODE_BEGIN(A0)  /* LDY #$nn */
          LDY(2, IMMEDIATE_BYTE);
          OPCODE_END
@@ -2104,7 +2110,7 @@ int nes6502_execute(int timeslice_cycles)
       OPCODE_BEGIN(AD)  /* LDA $nnnn */
          LDA(4, ABSOLUTE_BYTE);
          OPCODE_END
-      
+
       OPCODE_BEGIN(AE)  /* LDX $nnnn */
          LDX(4, ABSOLUTE_BYTE);
          OPCODE_END
@@ -2232,7 +2238,7 @@ int nes6502_execute(int timeslice_cycles)
       OPCODE_BEGIN(CF)  /* DCP $nnnn */
          DCP(6, ABSOLUTE, mem_writebyte, addr);
          OPCODE_END
-      
+
       OPCODE_BEGIN(D0)  /* BNE $nnnn */
          BNE();
          OPCODE_END
@@ -2267,7 +2273,7 @@ int nes6502_execute(int timeslice_cycles)
 
       OPCODE_BEGIN(DB)  /* DCP $nnnn,Y */
          DCP(7, ABS_IND_Y, mem_writebyte, addr);
-         OPCODE_END                  
+         OPCODE_END
 
       OPCODE_BEGIN(DD)  /* CMP $nnnn,X */
          CMP(4, ABS_IND_X_BYTE_READ);
@@ -2420,7 +2426,7 @@ void nes6502_reset(void)
    uint8 d_flag, i_flag, z_flag, c_flag;
 
 /* Non-maskable interrupt */
-void nes6502_nmi(void)
+void IRAM_ATTR nes6502_nmi(void)
 {
    DECLARE_LOCAL_REGS
 
@@ -2434,7 +2440,7 @@ void nes6502_nmi(void)
 }
 
 /* Interrupt request */
-void nes6502_irq(void)
+void IRAM_ATTR nes6502_irq(void)
 {
    DECLARE_LOCAL_REGS
 

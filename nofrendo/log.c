@@ -23,11 +23,11 @@
 ** $Id: log.c,v 1.2 2001/04/27 14:37:11 neil Exp $
 */
 
-#include "stdlib.h"
-#include "stdio.h"
-#include "stdarg.h"
-#include "noftypes.h"
-#include "log.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
+#include <noftypes.h>
+#include <log.h>
 
 
 //static FILE *errorlog = NULL;
@@ -129,7 +129,7 @@ void log_assert(int expr, int line, const char *file, char *msg)
    else
       log_printf("ASSERT: line %d of %s\n", line, file);
 
-   //asm("break.n 1");
+   asm("break.n 1");
 //   exit(-1);
 }
 

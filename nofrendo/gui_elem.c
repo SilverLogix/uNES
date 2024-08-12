@@ -23,10 +23,10 @@
 ** $Id: gui_elem.c,v 1.2 2001/04/27 14:37:11 neil Exp $
 */
 
-#include "stdlib.h"
-#include "noftypes.h"
-#include "gui.h"
-#include "gui_elem.h"
+#include <stdlib.h>
+#include <noftypes.h>
+#include <gui.h>
+#include <gui_elem.h>
 
 #define  SMALL_FONT_KERN   6
 #define  SMALL_FONT_HEIGHT 6

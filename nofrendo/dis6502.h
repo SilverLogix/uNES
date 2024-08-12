@@ -17,39 +17,40 @@
 ** must bear this legend.
 **
 **
-** log.h
+** dis6502.h
 **
-** Error logging header file
-** $Id: log.h,v 1.1.1.1 2001/04/27 07:03:54 neil Exp $
+** 6502 disassembler header
+** $Id: dis6502.h,v 1.1 2001/04/27 12:54:39 neil Exp $
 */
 
-#ifndef _LOG_H_
-#define _LOG_H_
+#ifndef _DIS6502_H_
+#define _DIS6502_H_
 
-#include <stdio.h>
+#ifdef __cplusplus
+extern "C" {
+#endif /* __cplusplus */
 
-extern int log_init(void);
-extern void log_shutdown(void);
-extern int log_print(const char *string);
-extern int log_printf(const char *format, ...);
-extern void log_chain_logfunc(int (*logfunc)(const char *string));
-extern void log_assert(int expr, int line, const char *file, char *msg);
+extern char *nes6502_disasm(uint32 PC, uint8 P, uint8 A, uint8 X, uint8 Y, uint8 S);
 
-#endif /* _LOG_H_ */
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#endif /* !_DIS6502_H_ */
 
 /*
-** $Log: log.h,v $
+** $Log: dis6502.h,v $
+** Revision 1.1  2001/04/27 12:54:39  neil
+** blah
+**
 ** Revision 1.1.1.1  2001/04/27 07:03:54  neil
 ** initial
 **
-** Revision 1.7  2000/11/06 02:15:07  matt
-** more robust logging routines
-**
-** Revision 1.6  2000/10/10 13:03:54  matt
-** Mr. Clean makes a guest appearance
-**
-** Revision 1.5  2000/07/17 01:52:27  matt
+** Revision 1.6  2000/07/17 01:52:28  matt
 ** made sure last line of all source files is a newline
+**
+** Revision 1.5  2000/07/11 04:26:23  matt
+** rewrote to fill up a static buffer, rather than use log_printf
 **
 ** Revision 1.4  2000/06/09 15:12:25  matt
 ** initial revision

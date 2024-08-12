@@ -25,17 +25,17 @@
 ** $Id: memguard.c,v 1.2 2001/04/27 14:37:11 neil Exp $
 */
 
-#include "noftypes.h"
-#include "memguard.h"
+#include <noftypes.h>
+#include <memguard.h>
 
 /* undefine macro definitions, so we get real calls */
 #undef malloc
 #undef free
 #undef strdup
 
-#include "string.h"
-#include "stdlib.h"
-#include "log.h"
+#include <string.h>
+#include <stdlib.h>
+#include <log.h>
 
 
 /* Maximum number of allocated blocks at any one time */
@@ -333,7 +333,7 @@ void *_my_malloc(int size)
 {
    void *temp;
    char fail[256];
-    printf("MALLOC %d\n",size);
+
    temp = malloc(size);
 
    if (NULL == temp)

@@ -12,12 +12,12 @@
 #ifndef _LIBSNSS_H_
 #define _LIBSNSS_H_
 
-#include "stdio.h"
+#include <stdio.h>
 
 /**************************************************************************/
 /* endian customization */
 /**************************************************************************/
-/* 
+/*
    Endian-ness quick reference:
    the number is:
       $12345678
@@ -318,12 +318,14 @@ typedef struct _SNSS_FILE
    FILE *fp;
    SNSS_OPEN_MODE mode;
    SnssFileHeader headerBlock;
-   SnssBaseBlock baseBlock;
-   SnssVramBlock vramBlock;
-   SnssSramBlock sramBlock;
-   SnssMapperBlock mapperBlock;
-   SnssControllersBlock contBlock;
-   SnssSoundBlock soundBlock;
+   union {
+      SnssBaseBlock baseBlock;
+      SnssVramBlock vramBlock;
+      SnssSramBlock sramBlock;
+      SnssMapperBlock mapperBlock;
+      SnssControllersBlock contBlock;
+      SnssSoundBlock soundBlock;
+   }
 } SNSS_FILE;
 
 #ifdef __cplusplus
@@ -331,12 +333,12 @@ extern "C" {
 #endif /* __cplusplus */
 
 /* general file manipulation routines */
-SNSS_RETURN_CODE SNSS_OpenFile (SNSS_FILE **snssFile, const char *filename, 
+SNSS_RETURN_CODE SNSS_OpenFile (SNSS_FILE **snssFile, const char *filename,
                                 SNSS_OPEN_MODE mode);
 SNSS_RETURN_CODE SNSS_CloseFile (SNSS_FILE **snssFile);
 
 /* block traversal */
-SNSS_RETURN_CODE SNSS_GetNextBlockType (SNSS_BLOCK_TYPE *blockType, 
+SNSS_RETURN_CODE SNSS_GetNextBlockType (SNSS_BLOCK_TYPE *blockType,
                                         SNSS_FILE *snssFile);
 SNSS_RETURN_CODE SNSS_SkipNextBlock (SNSS_FILE *snssFile);
 
@@ -351,7 +353,7 @@ const char *SNSS_GetErrorString (SNSS_RETURN_CODE code);
 }
 #endif /* __cplusplus */
 
-#endif /* _LIBSNSS_H_ */ 
+#endif /* _LIBSNSS_H_ */
 
 /*
 ** $Log: libsnss.h,v $

@@ -3,14 +3,14 @@
 **
 **
 ** This program is free software; you can redistribute it and/or
-** modify it under the terms of version 2 of the GNU Library General 
+** modify it under the terms of version 2 of the GNU Library General
 ** Public License as published by the Free Software Foundation.
 **
-** This program is distributed in the hope that it will be useful, 
+** This program is distributed in the hope that it will be useful,
 ** but WITHOUT ANY WARRANTY; without even the implied warranty of
-** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
-** Library General Public License for more details.  To obtain a 
-** copy of the GNU Library General Public License, write to the Free 
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+** Library General Public License for more details.  To obtain a
+** copy of the GNU Library General Public License, write to the Free
 ** Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 **
 ** Any permitted reproduction of these routines, in whole or in part,
@@ -22,17 +22,25 @@
 ** state saving/loading
 ** $Id: nesstate.c,v 1.2 2001/04/27 14:37:11 neil Exp $
 */
-
-#include "stdio.h"
-#include "string.h"
-#include "noftypes.h"
-#include "nesstate.h"
-#include "gui.h"
-#include "nes.h"
-#include "log.h"
-#include "osd.h"
-#include "libsnss.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <noftypes.h>
+#include <nesstate.h>
+#include <gui.h>
+#include <nes.h>
+#include <log.h>
+#include <osd.h>
+#include <libsnss.h>
 #include "nes6502.h"
+
+#include "odroid_sdcard.h"
+#include "odroid_settings.h"
+#include "odroid_overlay.h"
+#include "odroid_display.h"
+
+extern nes_t* console_nes;
+extern nes6502_context cpu;
 
 #define  FIRST_STATE_SLOT  0
 #define  LAST_STATE_SLOT   9
@@ -51,8 +59,9 @@ void state_setslot(int slot)
    }
 }
 
-static int save_baseblock(nes_t *state, SNSS_FILE *snssFile)
+int save_baseblock(nes_t *state, SNSS_FILE *snssFile)
 {
+    printf("save_baseblock\n");
    int i;
 
    ASSERT(state);
@@ -66,7 +75,6 @@ static int save_baseblock(nes_t *state, SNSS_FILE *snssFile)
    snssFile->baseBlock.regFlags = state->cpu->p_reg;
    snssFile->baseBlock.regStack = state->cpu->s_reg;
    snssFile->baseBlock.regPc = state->cpu->pc_reg;
-
    snssFile->baseBlock.reg2000 = state->ppu->ctrl0;
    snssFile->baseBlock.reg2001 = state->ppu->ctrl1;
 
@@ -74,15 +82,17 @@ static int save_baseblock(nes_t *state, SNSS_FILE *snssFile)
    memcpy(snssFile->baseBlock.spriteRam, state->ppu->oam, 0x100);
    memcpy(snssFile->baseBlock.ppuRam, state->ppu->nametab, 0x1000);
 
+
    /* Mask off priority color bits */
    for (i = 0; i < 32; i++)
+   {
       snssFile->baseBlock.palette[i] = state->ppu->palette[i] & 0x3F;
+   }
 
    snssFile->baseBlock.mirrorState[0] = (state->ppu->page[8] + 0x2000 - state->ppu->nametab) / 0x400;
    snssFile->baseBlock.mirrorState[1] = (state->ppu->page[9] + 0x2400 - state->ppu->nametab) / 0x400;
    snssFile->baseBlock.mirrorState[2] = (state->ppu->page[10] + 0x2800 - state->ppu->nametab) / 0x400;
    snssFile->baseBlock.mirrorState[3] = (state->ppu->page[11] + 0x2C00 - state->ppu->nametab) / 0x400;
-
    snssFile->baseBlock.vramAddress = state->ppu->vaddr;
    snssFile->baseBlock.spriteRamAddress = state->ppu->oam_addr;
    snssFile->baseBlock.tileXOffset = state->ppu->tile_xofs;
@@ -90,12 +100,16 @@ static int save_baseblock(nes_t *state, SNSS_FILE *snssFile)
    return 0;
 }
 
-static bool save_vramblock(nes_t *state, SNSS_FILE *snssFile)
+bool save_vramblock(nes_t *state, SNSS_FILE *snssFile)
 {
+    printf("save_vramblock\n");
    ASSERT(state);
 
    if (NULL == state->rominfo->vram)
-      return -1;
+   {
+       printf("save_vramblock: NULL == state->rominfo->vram\n");
+       return -1;
+  }
 
    if (state->rominfo->vram_banks > 2)
    {
@@ -109,8 +123,9 @@ static bool save_vramblock(nes_t *state, SNSS_FILE *snssFile)
    return 0;
 }
 
-static int save_sramblock(nes_t *state, SNSS_FILE *snssFile)
+int save_sramblock(nes_t *state, SNSS_FILE *snssFile)
 {
+    printf("save_sramblock\n");
    int i;
    bool written = false;
    int sram_length;
@@ -130,7 +145,10 @@ static int save_sramblock(nes_t *state, SNSS_FILE *snssFile)
    }
 
    if (false == written)
+   {
+       printf("save_srambloc: false == written\n");
       return -1;
+  }
 
    if (state->rominfo->sram_banks > 8)
    {
@@ -148,8 +166,9 @@ static int save_sramblock(nes_t *state, SNSS_FILE *snssFile)
    return 0;
 }
 
-static int save_soundblock(nes_t *state, SNSS_FILE *snssFile)
+int save_soundblock(nes_t *state, SNSS_FILE *snssFile)
 {
+    printf("save_soundblock\n");
    ASSERT(state);
 
    apu_getcontext(state->apu);
@@ -183,8 +202,9 @@ static int save_soundblock(nes_t *state, SNSS_FILE *snssFile)
    return 0;
 }
 
-static int save_mapperblock(nes_t *state, SNSS_FILE *snssFile)
+int save_mapperblock(nes_t *state, SNSS_FILE *snssFile)
 {
+    printf("save_mapperblock\n");
    int i;
    ASSERT(state);
 
@@ -193,7 +213,10 @@ static int save_mapperblock(nes_t *state, SNSS_FILE *snssFile)
    /* TODO: filthy hack in snss standard */
    /* We don't need to write mapper state for mapper 0 */
    if (0 == state->mmc->intf->number)
-      return -1;
+   {
+       printf("save_mapperblock: 0 == state->mmc->intf->number\n");
+       return -1;
+    }
 
    nes6502_getcontext(state->cpu);
 
@@ -219,10 +242,12 @@ static int save_mapperblock(nes_t *state, SNSS_FILE *snssFile)
    return 0;
 }
 
-static void load_baseblock(nes_t *state, SNSS_FILE *snssFile)
+void load_baseblock(nes_t *state, SNSS_FILE *snssFile)
 {
+    printf("load_baseblock\n");
+
    int i;
-   
+
    ASSERT(state);
 
    nes6502_getcontext(state->cpu);
@@ -234,7 +259,6 @@ static void load_baseblock(nes_t *state, SNSS_FILE *snssFile)
    state->cpu->p_reg = snssFile->baseBlock.regFlags;
    state->cpu->s_reg = snssFile->baseBlock.regStack;
    state->cpu->pc_reg = snssFile->baseBlock.regPc;
-
    state->ppu->ctrl0 = snssFile->baseBlock.reg2000;
    state->ppu->ctrl1 = snssFile->baseBlock.reg2001;
 
@@ -270,46 +294,57 @@ static void load_baseblock(nes_t *state, SNSS_FILE *snssFile)
    ppu_write(PPU_VADDR, (uint8) (state->ppu->vaddr & 0xFF));
 }
 
-static void load_vramblock(nes_t *state, SNSS_FILE *snssFile)
+void load_vramblock(nes_t *state, SNSS_FILE *snssFile)
 {
+    printf("load_vramblock\n");
+
    ASSERT(state);
 
    ASSERT(snssFile->vramBlock.vramSize <= VRAM_8K); /* can't handle more than this! */
    memcpy(state->rominfo->vram, snssFile->vramBlock.vram, snssFile->vramBlock.vramSize);
 }
 
-static void load_sramblock(nes_t *state, SNSS_FILE *snssFile)
+void load_sramblock(nes_t *state, SNSS_FILE *snssFile)
 {
+    printf("load_sramblock\n");
+
    ASSERT(state);
 
    ASSERT(snssFile->sramBlock.sramSize <= SRAM_8K); /* can't handle more than this! */
    memcpy(state->rominfo->sram, snssFile->sramBlock.sram, snssFile->sramBlock.sramSize);
 }
 
-static void load_controllerblock(nes_t *state, SNSS_FILE *snssFile)
+void load_controllerblock(nes_t *state, SNSS_FILE *snssFile)
 {
+    printf("load_controllerblock\n");
+
    UNUSED(state);
    UNUSED(snssFile);
 }
 
-static void load_soundblock(nes_t *state, SNSS_FILE *snssFile)
+void load_soundblock(nes_t *state, SNSS_FILE *snssFile)
 {
+    printf("load_soundblock\n");
+
    int i;
 
    ASSERT(state);
 
-   for (i = 0; i < 0x15; i++)
-   {
-      if (i != 0x13) /* do NOT trigger OAM DMA! */
-         apu_write(0x4000 + i, snssFile->soundBlock.soundRegisters[i]);
-   }
+    apu_reset();
+
+    for (i = 0; i < SOUND_BLOCK_LENGTH; i++)
+    {
+          apu_write(0x4000 + i, snssFile->soundBlock.soundRegisters[i]);
+    }
 }
 
 /* TODO: magic numbers galore */
-static void load_mapperblock(nes_t *state, SNSS_FILE *snssFile)
+void load_mapperblock(nes_t *state, SNSS_FILE *snssFile)
 {
+    printf("load_mapperblock\n");
+
    int i;
-   
+
    ASSERT(state);
 
    mmc_getcontext(state->mmc);
@@ -337,28 +372,25 @@ static void load_mapperblock(nes_t *state, SNSS_FILE *snssFile)
 }
 
 
-int state_save(void)
+static int state_save(char* fn)
 {
    SNSS_FILE *snssFile;
    SNSS_RETURN_CODE status;
-   char fn[PATH_MAX + 1], ext[5];
+
    nes_t *machine;
 
    /* get the pointer to our NES machine context */
-   machine = nes_getcontextptr();
+   machine = console_nes;
    ASSERT(machine);
-   
-   /* build our filename using the image's name and the slot number */
-   strncpy(fn, machine->rominfo->filename, PATH_MAX - 4);
-   
-   ASSERT(state_slot >= FIRST_STATE_SLOT && state_slot <= LAST_STATE_SLOT);
-   sprintf(ext, ".ss%d", state_slot);
-   osd_newextension(fn, ext);
+
+   printf("state_save: fn='%s'\n", fn);
 
    /* open our state file for writing */
    status = SNSS_OpenFile(&snssFile, fn, SNSS_OPEN_WRITE);
    if (SNSS_OK != status)
-      goto _error;
+      return -1;
+
+   printf("state_save: SNSS_OpenFile OK\n");
 
    /* now get all of our blocks */
    if (0 == save_baseblock(machine, snssFile))
@@ -367,6 +399,7 @@ int state_save(void)
       if (SNSS_OK != status)
          goto _error;
    }
+   printf("state_save: save_baseblock OK\n");
 
    if (0 == save_vramblock(machine, snssFile))
    {
@@ -374,6 +407,7 @@ int state_save(void)
       if (SNSS_OK != status)
          goto _error;
    }
+   printf("state_save: save_vramblock OK\n");
 
    if (0 == save_sramblock(machine, snssFile))
    {
@@ -381,6 +415,7 @@ int state_save(void)
       if (SNSS_OK != status)
          goto _error;
    }
+   printf("state_save: save_sramblock OK\n");
 
    if (0 == save_soundblock(machine, snssFile))
    {
@@ -388,6 +423,7 @@ int state_save(void)
       if (SNSS_OK != status)
          goto _error;
    }
+   printf("state_save: save_soundblock OK\n");
 
    if (0 == save_mapperblock(machine, snssFile))
    {
@@ -395,47 +431,52 @@ int state_save(void)
       if (SNSS_OK != status)
          goto _error;
    }
+   printf("state_save: save_mapperblock OK\n");
 
    /* close the file, we're done */
    status = SNSS_CloseFile(&snssFile);
    if (SNSS_OK != status)
       goto _error;
 
-   gui_sendmsg(GUI_GREEN, "State %d saved", state_slot);
+   printf("State %d saved\n", state_slot);
    return 0;
 
 _error:
-   gui_sendmsg(GUI_RED, "error: %s", SNSS_GetErrorString(status));
+   printf("error: %s\n", SNSS_GetErrorString(status));
    SNSS_CloseFile(&snssFile);
    return -1;
 }
 
-int state_load(void)
+
+static int state_load(char* fn)
 {
    SNSS_FILE *snssFile;
    SNSS_RETURN_CODE status;
    SNSS_BLOCK_TYPE block_type;
-   char fn[PATH_MAX + 1], ext[5];
+
    unsigned int i;
    nes_t *machine;
+   nes_t nes;
 
    /* get our machine's context pointer */
-   machine = nes_getcontextptr();
+   machine = console_nes;
+
    ASSERT(machine);
 
-   /* build the state name using the ROM's name and the slot number */
-   strncpy(fn, machine->rominfo->filename, PATH_MAX - 4);
+   printf("state_load: fn='%s'\n", fn);
 
-   ASSERT(state_slot >= FIRST_STATE_SLOT && state_slot <= LAST_STATE_SLOT);
-   sprintf(ext, ".ss%d", state_slot);
-   osd_newextension(fn, ext);
-   
-   /* open our file for writing */
+   /* open our file for reading */
    status = SNSS_OpenFile(&snssFile, fn, SNSS_OPEN_READ);
    if (SNSS_OK != status)
-      goto _error;
+   {
+       printf("state_load: file '%s' could not be opened.\n", fn);
+       return -1; //goto _error;
+  }
+
 
    /* iterate through all present blocks */
+   printf("state_load: snssFile->headerBlock.numberOfBlocks=%d\n", snssFile->headerBlock.numberOfBlocks);
+
    for (i = 0; i < snssFile->headerBlock.numberOfBlocks; i++)
    {
       status = SNSS_GetNextBlockType(&block_type, snssFile);
@@ -459,19 +500,19 @@ int state_load(void)
       case SNSS_SRAM:
          load_sramblock(machine, snssFile);
          break;
-      
+
       case SNSS_MPRD:
          load_mapperblock(machine, snssFile);
          break;
-      
+
       case SNSS_CNTR:
          load_controllerblock(machine, snssFile);
          break;
-      
+
       case SNSS_SOUN:
          load_soundblock(machine, snssFile);
          break;
-      
+
       case SNSS_UNKNOWN_BLOCK:
       default:
          log_printf("unknown SNSS block type\n");
@@ -481,17 +522,60 @@ int state_load(void)
 
    /* close file, we're done */
    status = SNSS_CloseFile(&snssFile);
-   if (SNSS_OK != status)
-      goto _error;
 
-   gui_sendmsg(GUI_GREEN, "State %d restored", state_slot);
+   printf("State %d restored", state_slot);
 
    return 0;
 
 _error:
    gui_sendmsg(GUI_RED, "error: %s", SNSS_GetErrorString(status));
    SNSS_CloseFile(&snssFile);
-   return -1;
+   abort();
+}
+
+
+void save_sram()
+{
+    odroid_display_lock();
+
+    char* romPath = odroid_settings_RomFilePath_get();
+    if (romPath)
+    {
+        char* pathName = odroid_sdcard_get_savefile_path(romPath);
+        if (!pathName) abort();
+
+        if (state_save(pathName) < 0)
+        {
+            odroid_overlay_alert("Save failed");
+        }
+
+        free(pathName);
+        free(romPath);
+    }
+
+    odroid_display_unlock();
+}
+
+void load_sram()
+{
+    odroid_display_lock();
+
+    char* romName = odroid_settings_RomFilePath_get();
+    if (romName)
+    {
+        char* pathName = odroid_sdcard_get_savefile_path(romName);
+        if (!pathName) abort();
+
+        if (state_load(pathName) < 0)
+        {
+            // abort();
+        }
+
+        free(pathName);
+        free(romName);
+    }
+
+    odroid_display_unlock();
 }
 
 /*
