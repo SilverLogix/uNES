@@ -25,7 +25,7 @@
 
 #include "../noftypes.h"
 #include "../nes/nes_mmc.h"
-#include "../nes/nes.h'
+#include "../nes/nes.h"
 #include "../log.h"
 
 #define VRC_VBANK(bank, value, high) \
