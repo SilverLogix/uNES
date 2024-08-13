@@ -371,8 +371,9 @@ void nes_emulate(void)
    uint emulatedFrames = 0;
    uint renderedFrames = 0;
    uint skippedFrames = 0;
+   uint CpuFreq = rtc_clk_cpu_freq_get();
 
-   const int frameTime = CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ * 1000000 / NES_REFRESH_RATE;
+   const int frameTime = CpuFreq * 1000000 / NES_REFRESH_RATE;
    bool renderFrame = true;
 
    for (int i = 0; i < 4; ++i)
@@ -381,10 +382,10 @@ void nes_emulate(void)
       nes_renderframe(1);
    }
 
-   if (startAction == ODROID_START_ACTION_RESUME)
-   {
-      load_sram();
-   }
+   //if (startAction == ODROID_START_ACTION_RESUME)
+   //{
+   //   load_sram();
+   //}
 
    while (false == nes.poweroff)
    {
@@ -397,12 +398,14 @@ void nes_emulate(void)
       // Don't allow skipping more than one frame at a time.
       renderFrame = !renderFrame || get_elapsed_time_since(startTime) <= frameTime;
 
+      /*
       if (speedupEnabled) {
          renderFrame = (emulatedFrames % speedupEnabled) == 0;
       } else {
          do_audio_frame();
       }
-
+      */
+      
       if (renderFrame) {
          // ++renderedFrames;
          // if (interlace >= 0) {
@@ -417,7 +420,7 @@ void nes_emulate(void)
 
       if (emulatedFrames == NES_REFRESH_RATE)
       {
-         float seconds = totalElapsedTime / (CONFIG_ESP32_DEFAULT_CPU_FREQ_MHZ * 1000000.0f);
+         float seconds = totalElapsedTime / (CpuFreq * 1000000.0f);
          float fps = emulatedFrames / seconds;
 
          //odroid_battery_state battery;

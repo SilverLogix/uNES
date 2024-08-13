@@ -14,15 +14,14 @@
 ** ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 ** SOFTWARE.
 */
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "emu.h"
 #include "media.h"
 
 extern "C" {
-//#include "nofrendo/osd.h"
-//#include "nofrendo/event.h"
+#include "nofrendo/osd.h"
+#include "nofrendo/event.h"
 };
 #include "math.h"
 
@@ -192,7 +191,7 @@ char *osd_getromdata()
 extern "C"
 int nes_emulate_init(const char* path, int width, int height);
 
-extern "C"
+
 uint8_t** nes_emulate_frame(bool draw_flag);
 
 static void (*nes_sound_cb)(void *buffer, int length) = 0;

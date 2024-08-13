@@ -40,16 +40,7 @@
 // Create a new emulator, messy ifdefs ensure that only one links at a time
 Emu* NewEmulator()
 {  
-  #if (EMULATOR==EMU_NES)
-  return NewNofrendo(VIDEO_STANDARD);
-  #endif
-  #if (EMULATOR==EMU_SMS)
-  return NewSMSPlus(VIDEO_STANDARD);
-  #endif
-  #if (EMULATOR==EMU_ATARI)
-  return NewAtari800(VIDEO_STANDARD);
-  #endif
-  printf("Must choose one of the following emulators: EMU_NES,EMU_SMS,EMU_ATARI\n");
+NewNofrendo(VIDEO_STANDARD);
 }
 
 Emu* _emu = 0;            // emulator running on core 0
